@@ -1,0 +1,26 @@
+#!/bin/sh
+
+GCC=gcc
+
+FILES="files/files.c \
+	   desktop.c \
+	  "
+OUT="desktop"
+OUTKMS="desktop_kms"
+
+DIR="/run"
+WARN="-Werror -Wall -Wfatal-errors"
+USR=`whoami`
+IDN=`id -u`
+if grep -q "ID=ubuntu" /etc/os-release 2>/dev/null ; then
+	DIR="/run/$USR/$IDN"
+	WARN="-w"
+fi
+
+#OPTIM="-march=native -O3"
+OPTIM="-O0"
+
+$GCC -D __dirpath__=\"$DIR\" $WARN $OPTIM -s -no-pie -fno-pie -o $OUT $FILES -lm -lpthread -lX11 -lGL -lGLX || exit 1
+#$GCC -D __dirpath__=\"$DIR\" $WARN $OPTIM -S -fverbose-asm desktop.c -o desktop.s || exit 1
+
+$GCC -D __dirpath__=\"$DIR\" -D __kms__ $WARN $OPTIM -no-pie -fno-pie -s -o $OUTKMS $FILES -lm -lpthread -I/usr/include/drm -ldrm -lgbm -lEGL -lGLESv2 -linput -ludev || exit 1
